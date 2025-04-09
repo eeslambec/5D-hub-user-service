@@ -1,0 +1,20 @@
+server:
+  port: 5070
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: 1427
+    url: jdbc:postgresql://localhost:5432/fivedhub_users
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  application:
+    name: fivedhub-users
+  config:
+    import: optional:configserver:http://localhost:8101
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8741/eureka
