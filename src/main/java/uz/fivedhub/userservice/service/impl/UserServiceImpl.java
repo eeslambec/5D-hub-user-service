@@ -13,9 +13,7 @@ import uz.fivedhub.userservice.repository.UserRepository;
 import uz.fivedhub.userservice.service.UserService;
 import uz.fivedhub.userservice.util.Validation;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,15 +24,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User save(UserCreateDto userCreateDto) {
-        Company company = companyProxy.getById(userCreateDto.getCompanyId()).getBody();
-        if (company == null) {
+
+        if (companyProxy.getById(userCreateDto.getCompanyId()).getBody() == null) {
             throw new NotFoundException("Company");
         }
         return userRepository.save(User.builder()
                         .firstName(userCreateDto.getFirstName())
                         .lastName(userCreateDto.getLastName())
                         .phoneNumber(userCreateDto.getPhoneNumber())
-                        .company(company)
+                        .companyId(userCreateDto.getCompanyId())
                 .build());
     }
 
@@ -42,6 +40,11 @@ public class UserServiceImpl implements UserService {
     public User getById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User"));
+    }
+
+    @Override
+    public List<User> getAll() {
+        return userRepository.findAll();
     }
 
     @Override
@@ -63,8 +66,7 @@ public class UserServiceImpl implements UserService {
     public User update(UserUpdateDto userUpdateDto) {
         User byId = userRepository.findById(userUpdateDto.getId())
                 .orElseThrow(() -> new NotFoundException("User"));
-        Company company = companyProxy.getById(userUpdateDto.getCompanyId()).getBody();
-        if (company == null) {
+        if (companyProxy.getById(userUpdateDto.getCompanyId()).getBody() == null) {
             throw new NotFoundException("Company");
         }
         return userRepository.save(
@@ -73,7 +75,7 @@ public class UserServiceImpl implements UserService {
                         .firstName(Validation.requireNonNullElse(userUpdateDto.getFirstName(), byId.getFirstName()))
                         .lastName(Validation.requireNonNullElse(userUpdateDto.getLastName(), byId.getLastName()))
                         .phoneNumber(Validation.requireNonNullElse(userUpdateDto.getPhoneNumber(), byId.getPhoneNumber()))
-                        .company(Validation.requireNonNullElse(company, byId.getCompany()))
+                        .companyId(Validation.requireNonNullElse(userUpdateDto.getCompanyId(), byId.getCompanyId()))
                         .build()
         );
     }

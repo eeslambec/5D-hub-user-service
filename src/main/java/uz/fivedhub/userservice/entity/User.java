@@ -19,8 +19,7 @@ public class User {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    @Embedded
-    private Company company;
+    private Long companyId;
 }
 
 
