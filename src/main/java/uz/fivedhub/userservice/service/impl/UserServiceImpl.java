@@ -2,7 +2,6 @@ package uz.fivedhub.userservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import uz.fivedhub.userservice.dto.CustomResponseEntity;
 import uz.fivedhub.userservice.dto.UserCreateDto;
 import uz.fivedhub.userservice.dto.UserUpdateDto;
 import uz.fivedhub.userservice.entity.Company;
@@ -24,10 +23,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User save(UserCreateDto userCreateDto) {
-
-        if (companyProxy.getById(userCreateDto.getCompanyId()).getBody() == null) {
-            throw new NotFoundException("Company");
-        }
         return userRepository.save(User.builder()
                         .firstName(userCreateDto.getFirstName())
                         .lastName(userCreateDto.getLastName())
@@ -38,28 +33,59 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getById(Long id) {
-        return userRepository.findById(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User"));
+        Company body = companyProxy.getById(user.getCompanyId()).getBody();
+        if (body == null) throw new NotFoundException("Company");
+        user.setCompany(body);
+        return user;
     }
 
     @Override
     public List<User> getAll() {
-        return userRepository.findAll();
+        List<User> users = userRepository.findAll();
+        if (users.isEmpty()) throw new NotFoundException("User");
+
+        for (User user : users) {
+            if (companyProxy.getById(user.getCompanyId()).getBody() == null) throw new NotFoundException("Company");
+            Company body = companyProxy.getById(user.getCompanyId()).getBody();
+            user.setCompany(body);
+        }
+        return users;
+    }
+
+    /**
+     * This method works for only company service. That's why I did not set the companies.
+     * */
+    @Override
+    public List<User> getAllByIds(List<Long> ids) {
+        List<User> allByIds = userRepository.findAllByIds(ids);
+        if (allByIds.isEmpty()) throw new NotFoundException("Users");
+        return allByIds;
     }
 
     @Override
     public User getByPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(phoneNumber)
+        User user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new NotFoundException("User"));
+        Company body = companyProxy.getById(user.getCompanyId()).getBody();
+        if (body == null) throw new NotFoundException("Company");
+        user.setCompany(body);
+        return user;
     }
 
     @Override
     public List<User> getByCompanyId(Long companyId) {
-        CustomResponseEntity<Company> byId = companyProxy.getById(companyId);
-        if (byId == null) {
-            throw new NotFoundException("Company");
+        List<User> byCompanyId = userRepository.findByCompanyId(companyId);
+        if (byCompanyId.isEmpty()) throw new NotFoundException("Users");
+        Company body = companyProxy.getById(companyId).getBody();
+        if (body == null) throw new NotFoundException("Company");
+
+        for (User user : byCompanyId) {
+            user.setCompany(body);
         }
-        return byId.getBody().getUsers();
+
+        return byCompanyId;
     }
 
     @Override
@@ -82,9 +108,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteById(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new NotFoundException("User");
-        }
+        User user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User"));
+        Company body = companyProxy.getById(user.getCompanyId()).getBody();
+        if (body == null) throw new NotFoundException("Company");
+        List<Long> userIds = body.getUserIds();
+        List<User> users = body.getUsers();
+        if (userIds == null) throw new NotFoundException("User IDs");
+        boolean remove = users.remove(user);
+        boolean removeId = userIds.remove(user.getId());
+        if (!remove && !removeId) throw new NotFoundException("User");
+
+        body.setUsers(users);
+        body.setUserIds(userIds);
+        companyProxy.update(body);
         userRepository.deleteById(id);
     }
 }

@@ -20,9 +20,11 @@ public class User {
     private String lastName;
     private String phoneNumber;
     private Long companyId;
+    @Transient
+    private Company company;
 }
 
 
 /*
-* I did not add status field because in the document it was not required.
+* I did not add status field because in the document it was unnecessary.
 * */

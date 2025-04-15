@@ -15,6 +15,5 @@ public class UserCreateDto {
     private String lastName;
     @NotBlank
     private String phoneNumber;
-    @NotBlank
     private Long companyId;
 }

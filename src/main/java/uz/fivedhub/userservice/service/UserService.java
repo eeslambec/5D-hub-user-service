@@ -12,6 +12,7 @@ public interface UserService {
     User save(UserCreateDto userCreateDto);
     User getById(Long id);
     List<User> getAll();
+    List<User> getAllByIds(List<Long> ids);
     User getByPhoneNumber(String phoneNumber);
     List<User> getByCompanyId(Long companyId);
     User update(UserUpdateDto userUpdateDto);
